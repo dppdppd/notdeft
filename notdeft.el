@@ -1128,31 +1128,15 @@ whose information was removed."
     (puthash file (list mtime contents title summary)
 	     notdeft-hash-entries)))
 
-(defun notdeft-default-title-function (file)
-  "Generate the title from the first line of the buffer of FILE."
-  (let* ((res (with-temp-buffer
-		(insert-file-contents file)
-		(notdeft-parse-buffer)))
-	 (title (car res)))
-    title))
-
-(defun notdeft-filename-as-title (file)
-  "Generate the title from the filename of FILE."
-  (let* ((title (notdeft-base-filename file))
-         (title (if (> (string-width title) 60)
-                    (truncate-string-to-width title 60)
-                  title)))
-    title))
-
-         (defun notdeft-cache-file (file)
-           "Update file cache for FILE.
+(defun notdeft-cache-file (file)
+  "Update file cache for FILE.
 Keep any information for a non-existing file."
-           (when (file-exists-p file)
-             (let ((mtime-cache (notdeft-file-mtime file))
-                   (mtime-file (nth 5 (file-attributes file))))
-               (when (or (not mtime-cache)
-		         (time-less-p mtime-cache mtime-file))
-	         (notdeft-cache-newer-file file mtime-file)))))
+  (when (file-exists-p file)
+    (let ((mtime-cache (notdeft-file-mtime file))
+          (mtime-file (nth 5 (file-attributes file))))
+      (when (or (not mtime-cache)
+		(time-less-p mtime-cache mtime-file))
+	(notdeft-cache-newer-file file mtime-file)))))
 
 (defun notdeft-cache-update (files)
   "Update cached information for FILES."
@@ -2903,6 +2887,22 @@ interactively, any prefix arguments are also interpreted in the
       (notdeft-open-query
        (if rank title (notdeft-string-as-phrase-query title))
        rank negate))))
+
+(defun notdeft-default-title-function (file)
+  "Generate the title from the first line of the buffer of FILE."
+  (let* ((res (with-temp-buffer
+		(insert-file-contents file)
+		(notdeft-parse-buffer)))
+	 (title (car res)))
+    title))
+
+(defun notdeft-filename-as-title (file)
+  "Generate the title from the filename of FILE."
+  (let* ((title (notdeft-base-filename file))
+         (title (if (> (string-width title) 60)
+                    (truncate-string-to-width title 60)
+                  title)))
+    title))
 
 (provide 'notdeft)
 
