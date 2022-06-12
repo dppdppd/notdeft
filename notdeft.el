@@ -359,6 +359,11 @@ information about all files at all times."
   :safe (lambda (v) (or (not v) (numberp v)))
   :group 'notdeft)
 
+(defcustom notdeft-title-function 'notdeft-default-title-function
+  "Function for deriving a note title from a file."
+  :type 'function
+  :group 'notdeft)
+
 ;; Faces
 
 (defgroup notdeft-faces nil
@@ -1113,7 +1118,7 @@ whose information was removed."
   (let* ((res (with-temp-buffer
 		(insert-file-contents file)
 		(notdeft-parse-buffer)))
-	 (title (car res))
+	 (title (funcall notdeft-title-function file))
 	 (summary (cadr res))
 	 (contents
 	  (concat file " "
@@ -1123,15 +1128,31 @@ whose information was removed."
     (puthash file (list mtime contents title summary)
 	     notdeft-hash-entries)))
 
-(defun notdeft-cache-file (file)
-  "Update file cache for FILE.
+(defun notdeft-default-title-function (file)
+  "Generate the title from the first line of the buffer of FILE."
+  (let* ((res (with-temp-buffer
+		(insert-file-contents file)
+		(notdeft-parse-buffer)))
+	 (title (car res)))
+    title))
+
+(defun notdeft-filename-as-title (file)
+  "Generate the title from the filename of FILE."
+  (let* ((title (notdeft-base-filename file))
+         (title (if (> (string-width title) 60)
+                    (truncate-string-to-width title 60)
+                  title)))
+    title))
+
+         (defun notdeft-cache-file (file)
+           "Update file cache for FILE.
 Keep any information for a non-existing file."
-  (when (file-exists-p file)
-    (let ((mtime-cache (notdeft-file-mtime file))
-          (mtime-file (nth 5 (file-attributes file))))
-      (when (or (not mtime-cache)
-		(time-less-p mtime-cache mtime-file))
-	(notdeft-cache-newer-file file mtime-file)))))
+           (when (file-exists-p file)
+             (let ((mtime-cache (notdeft-file-mtime file))
+                   (mtime-file (nth 5 (file-attributes file))))
+               (when (or (not mtime-cache)
+		         (time-less-p mtime-cache mtime-file))
+	         (notdeft-cache-newer-file file mtime-file)))))
 
 (defun notdeft-cache-update (files)
   "Update cached information for FILES."
